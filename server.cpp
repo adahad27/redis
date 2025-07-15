@@ -1,36 +1,7 @@
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <cassert>
-#include <unistd.h>
-#include <string.h>
+#include "msg_lib.h"
 
 const uint32_t MAX_MSG_LEN = 1000; 
 
-int recv_all(int connfd, char* buf, int n) {
-    int read_bytes = 0;
-    int result = 0;
-    while(read_bytes < n) {
-        result = recv(connfd, buf, n, 0);
-        if(result < 0) {
-            return -1;
-        }
-    }
-    return 0;
-}
-
-int send_all(int connfd, char* buf, int n) {
-    int write_bytes = 0;
-    int result = 0;
-    while(write_bytes < n) {
-        result = send(connfd, buf, n, 0);
-        if(result < 0) {
-            return -1;
-        }
-    }
-    return 0;
-}
 
 int req_resp_handler(int connection_fd) {
     char msg[4 + MAX_MSG_LEN];
@@ -54,7 +25,8 @@ int req_resp_handler(int connection_fd) {
         return error;
     }
 
-
+    printf("Client said: %*s\n", len, msg + 4);
+    return 0;
 
 }
 
@@ -65,7 +37,7 @@ int main() {
     int val = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 
-    uint32_t port = 80;
+    uint32_t port = 8000;
 
     sockaddr_in addr{};
 
@@ -87,6 +59,9 @@ int main() {
         int connection_fd = accept(fd, reinterpret_cast<sockaddr *>(&client), &addrlen);
         assert(connection_fd);
         //Redis work
+        req_resp_handler(connection_fd);
         close(connection_fd);
     }
+
+    return 0;
 }
