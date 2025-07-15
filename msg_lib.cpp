@@ -9,6 +9,7 @@ int recv_all(int connfd, char* buf, int n) {
         if(result < 0) {
             return -1;
         }
+        read_bytes += result;
     }
     return 0;
 }
@@ -21,6 +22,7 @@ int send_all(int connfd, char* buf, int n) {
         if(result < 0) {
             return -1;
         }
+        write_bytes += result;
     }
     return 0;
 }

@@ -25,5 +25,4 @@ all: $(SERVER_TARGET) $(CLIENT_TARGET)
 
 clean:
 	-rm -f $(OBJECTS)
-	-rm -f $(TARGET)
-	-rm -f *.tga
+	-rm -f $(SERVER_TARGET) $(CLIENT_TARGET)
