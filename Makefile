@@ -1,21 +1,27 @@
-SYSCONF_LINK = g++
+CC = g++
 CPPFLAGS     = -g
 LDFLAGS      =
 LIBS         = -lm
 
 DESTDIR = ./
-TARGET  = main.out
+SERVER_TARGET = server
+SERVER_SOURCES = server.cpp msg_lib.cpp
+SERVER_OUTPUT = server.out
+
+CLIENT_TARGET = client
+CLIENT_SOURCES = client.cpp msg_lib.cpp
+CLIENT_OUTPUT = client.out
 
 OBJECTS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 
-all: $(DESTDIR)$(TARGET)
+$(SERVER_TARGET): $(SERVER_SOURCES)
+	$(CC) $(CPPFLAGS) $(SERVER_SOURCES) -o $(SERVER_OUTPUT)
 
-$(DESTDIR)$(TARGET): $(OBJECTS)
-	$(SYSCONF_LINK) -Wall $(LDFLAGS) -o $(DESTDIR)$(TARGET) $(OBJECTS) $(LIBS)
+$(CLIENT_TARGET): $(CLIENT_SOURCES)
+	$(CC) $(CPPFLAGS) $(CLIENT_SOURCES) -o $(CLIENT_OUTPUT)
 
-$(OBJECTS): %.o: %.cpp
-	$(SYSCONF_LINK) -Wall $(CPPFLAGS) -c $(CFLAGS) $< -o $@
+all: $(SERVER_TARGET) $(CLIENT_TARGET)
 
 clean:
 	-rm -f $(OBJECTS)
