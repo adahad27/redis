@@ -5,7 +5,6 @@ int main() {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     assert(fd);
     
-    uint32_t port = 8080;
 
     struct sockaddr_in addr = {};
     addr.sin_family = AF_INET;
@@ -22,6 +21,19 @@ int main() {
 
     send_all(fd, (char*)&str_len, 4);
     send_all(fd, msg, strlen(msg));
+
+    char response[4 + MAX_MSG_LEN];
+
+    recv_all(fd, response, 4);
+    memcpy(&str_len, response, 4);
+    recv_all(fd, response + 4, str_len);
+
+    std::cout << "Response was:\n";
+    for(int i = 0; i < str_len; ++i) {
+        std::cout << response[4 + i];
+    }
+    std::cout<<"\n Response Finished.\n";
+
 
     close(fd);
 

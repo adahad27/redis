@@ -5,24 +5,27 @@ LIBS         = -lm
 
 DESTDIR = ./
 SERVER_TARGET = server
-SERVER_SOURCES = server.cpp msg_lib.cpp
-SERVER_OUTPUT = server.out
+SERVER_OBJS = server.o msg_lib.o
 
 CLIENT_TARGET = client
-CLIENT_SOURCES = client.cpp msg_lib.cpp
-CLIENT_OUTPUT = client.out
+CLIENT_OBJS = client.o msg_lib.o
 
 OBJECTS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 
-$(SERVER_TARGET): $(SERVER_SOURCES)
-	$(CC) $(CPPFLAGS) $(SERVER_SOURCES) -o $(SERVER_OUTPUT)
+$(SERVER_TARGET): $(SERVER_OBJS)
+	$(CC) $(CPPFLAGS) $^ -o $@.out
 
-$(CLIENT_TARGET): $(CLIENT_SOURCES)
-	$(CC) $(CPPFLAGS) $(CLIENT_SOURCES) -o $(CLIENT_OUTPUT)
+$(CLIENT_TARGET): $(CLIENT_OBJS)
+	$(CC) $(CPPFLAGS) $^ -o $@.out
 
 all: $(SERVER_TARGET) $(CLIENT_TARGET)
+
+# Generic rule for creating .o files
+%.o: %.cpp
+	${CC} -c $<
 
 clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(SERVER_TARGET) $(CLIENT_TARGET)
+	-rm -f *.out

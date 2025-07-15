@@ -1,7 +1,6 @@
 #include "msg_lib.h"
 #include <iostream>
 
-const uint32_t MAX_MSG_LEN = 1000; 
 
 
 int req_resp_handler(int connection_fd) {
@@ -31,7 +30,14 @@ int req_resp_handler(int connection_fd) {
         std::cout << msg[4 + i];
     }
     std::cout << std::endl;
-    
+
+    std::cout << "Server sending...\n";
+    char server_msg[] = "bye from the other side";
+    size_t str_len = strlen(server_msg);
+
+    send_all(connection_fd, (char*)&str_len, 4);
+    send_all(connection_fd, server_msg, str_len);
+    std::cout << "Server sent\n";
     return 0;
 
 }
@@ -45,7 +51,6 @@ int main() {
     int option = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &val, sizeof(val));
     assert(option >= 0);
 
-    uint32_t port = 8080;
 
     sockaddr_in addr{};
 
