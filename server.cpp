@@ -1,7 +1,17 @@
 #include "msg_lib.h"
 #include <iostream>
 
+struct Connection_State {
 
+    int fd = -1;
+    
+    bool want_read = false;
+    bool want_write = false;
+    bool want_close = false;
+
+    std::vector<uint8_t> incoming;
+    std::vector<uint8_t> outgoing;
+};
 
 int req_resp_handler(int connection_fd) {
     char msg[4 + MAX_MSG_LEN];
@@ -24,33 +34,39 @@ int req_resp_handler(int connection_fd) {
     if(error < 0) {
         return error;
     }
-    std::cout << "Client said: ";
 
     for(int i = 0; i < len; ++i) {
         std::cout << msg[4 + i];
     }
     std::cout << std::endl;
 
-    std::cout << "Server sending...\n";
     char server_msg[] = "bye from the other side";
     size_t str_len = strlen(server_msg);
 
     send_all(connection_fd, (char*)&str_len, 4);
     send_all(connection_fd, server_msg, str_len);
-    std::cout << "Server sent\n";
     return 0;
 
 }
 
-int main() {
+void connection_handler(char* incoming, char* outgoing) {
 
+}
+
+void add_connection() {
+
+}
+
+void delete_connection() {
+
+}
+
+int init_server() {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     assert(fd >= 0);
 
     int val = 1;
     int option = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &val, sizeof(val));
-    assert(option >= 0);
-
 
     sockaddr_in addr{};
 
@@ -60,20 +76,32 @@ int main() {
 
 
     int network_status = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
-    //Add an assert that checks network status here.
-    assert(network_status >= 0);
+    return fd;
+}
 
+void run_server(int fd) {
     listen(fd, MAX_MSG_LEN);
 
     struct sockaddr_in client{};
     socklen_t addrlen = sizeof(client);
+
+
+
+    std::vector<pollfd> connections;
+    std::vector<Connection_State> states;
+    
     while(true) {
-        int connection_fd = accept(fd, reinterpret_cast<sockaddr *>(&client), &addrlen);
-        assert(connection_fd);
-        //Redis work
-        req_resp_handler(connection_fd);
-        close(connection_fd);
+        int fd = accept(fd, reinterpret_cast<sockaddr*>(&client), &addrlen);
+
+        
     }
+}
+
+int main() {
+
+    int fd = init_server();
+
+    run_server(fd);
 
     return 0;
 }

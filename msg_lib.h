@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <poll.h>
+#include <vector>
 
 const uint32_t port = 8080;
 const uint32_t MAX_MSG_LEN = 1000;
