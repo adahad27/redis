@@ -63,6 +63,8 @@ void delete_connection() {
 
 int init_server() {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
     assert(fd >= 0);
 
     int val = 1;
@@ -89,11 +91,39 @@ void run_server(int fd) {
 
     std::vector<pollfd> connections;
     std::vector<Connection_State> states;
+    pollfd std_input;
+    std_input.fd = 0;
+    std_input.events = POLLIN;
+    connections.push_back(std_input);
     
     while(true) {
         int fd = accept(fd, reinterpret_cast<sockaddr*>(&client), &addrlen);
+        if(fd > -1) {
+            //Add another socket descriptor to our polling list
+            std::cout <<"We have accepted a connection and should create a file descriptor" << std::endl;
+        }
+        //Poll the list here
+        int poll_updates = poll(connections.data(), connections.size(), -1);
 
-        
+        //Handle reads here
+        for(int i = 0; i < connections.size(); ++i) {
+            if(connections[i].revents & POLLIN) {
+                // Handle read here
+                std::cout << "We found a reading connection" << std::endl;
+            }
+        }
+        //Handle writes here
+        for(int i = 0; i < connections.size(); ++i) {
+            if(connections[i].revents & POLLOUT) {
+                // Handle write here
+            }
+        }
+        //Handle closes here
+        for(int i = 0; i < connections.size(); ++i) {
+            if(connections[i].revents & POLLHUP) {
+                // Handle close here
+            }
+        }
     }
 }
 
