@@ -74,11 +74,11 @@ void handle_read(Connection_State &state) {
             state.incoming.push_back(buf);
         }
     }
-    // std::cout << "Received message was:\n";
-    // for(int i = 0; i < incoming_length; ++i) {
-    //     std::cout << (char) state.incoming[i];
-    // }
-    // std::cout << std::endl;
+    std::cout << "Server received message:\n";
+    for(int i = 0; i < incoming_length; ++i) {
+        std::cout << (char) state.incoming[4 + i];
+    }
+    std::cout << std::endl;
     state.want_read = false;
     process_request(state);
     handle_write(state);
@@ -176,9 +176,14 @@ void run_server(int fd) {
             }
             if(connections[i].revents & POLLOUT) {
                 // Insert write callback here
+                handle_write(states[i]);
             }
-            if(connections[i].revents & POLLHUP) {
+            if(connections[i].revents & POLLHUP || states[i].want_close) {
                 // Insert close callback here
+                int socket_fd = connections[i].fd;
+                delete_connection(i, connections, states);
+                close(socket_fd);
+                std::cout << "Server closed connection " << socket_fd << std::endl;
             }
         }
 

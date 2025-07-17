@@ -20,6 +20,8 @@ int main() {
     
 
     send_all(fd, (char*)&str_len, 4);
+    // close(fd);
+    // return 0;
     send_all(fd, msg, strlen(msg));
 
     char response[4 + MAX_MSG_LEN];
