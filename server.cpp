@@ -49,8 +49,37 @@ int req_resp_handler(int connection_fd) {
 
 }
 
-void connection_handler(Connection_State &state) {
-
+void handle_read(Connection_State &state) {
+    std::cout<<"reading from " << state.fd << std::endl;
+    char buf;
+    while(state.incoming.size() < 4) {
+        if((read(state.fd, &buf, 1) == -1)) {
+            return;
+        }
+        else {
+            state.incoming.push_back(buf);
+        }
+    }
+    
+    size_t incoming_length;
+    
+    memcpy(&incoming_length, state.incoming.data(), 4);
+    
+    while(state.incoming.size() < 4 + incoming_length) {
+        if((read(state.fd, &buf, 1) == -1) && 
+            (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            return;
+        }
+        else {
+            state.incoming.push_back(buf);
+        }
+    }
+    std::cout << "Received message was:\n";
+    for(int i = 0; i < incoming_length; ++i) {
+        std::cout << (char) state.incoming[i];
+    }
+    std::cout << std::endl;
+    state.want_read = false;
 }
 
 void add_connection(int incoming_fd, std::vector<pollfd> &connections, std::vector<Connection_State> &states) {
@@ -62,12 +91,20 @@ void add_connection(int incoming_fd, std::vector<pollfd> &connections, std::vect
 
 
     Connection_State state;
+    state.fd = incoming_fd;
+    state.want_read = true;
 
     connections.push_back(pfd);
     states.push_back(state);
 }
 
-void delete_connection() {
+void delete_connection(int idx, std::vector<pollfd> &connections, std::vector<Connection_State> &states) {
+
+    connections[idx] = connections[connections.size() - 1];
+    states[idx] = states[states.size() - 1];
+
+    connections.pop_back();
+    states.pop_back();
 
 }
 
@@ -103,24 +140,37 @@ void run_server(int fd) {
     std::vector<Connection_State> states;
 
     add_connection(fd, connections, states);
-    connections[0].events = POLLIN;
+    
 
     while(true) {
-        //Poll the list here
+
+        for(int i = 0; i < connections.size(); ++i) {
+            connections[i].events = 0;
+            if(states[i].want_read) {
+                connections[i].events |= POLLIN;
+            }
+            if(states[i].want_write) {
+                connections[i].events |= POLLOUT;
+            }
+            if(states[i].want_close) {
+                connections[i].events |= POLLHUP;
+            }
+        }
+
         int poll_updates = poll(connections.data(), connections.size(), -1);
 
-        //Handle reads here
         for(int i = 0; i < connections.size(); ++i) {
             if(connections[i].revents & POLLIN) {
-                // Handle read here
+
                 if(connections[i].fd == fd) {
                     int incoming_fd = accept(fd, (sockaddr*) &client, &addrlen);
                     add_connection(incoming_fd, connections, states);
                     connections[i].revents = 0;
-                    std::cout << "Connection added" << std::endl;
+                    std::cout << "Connection added for socket "<< incoming_fd << std::endl;
                 }
                 else {
                     //Insert read callback here
+                    handle_read(states[i]);
                 }
             }
             if(connections[i].revents & POLLOUT) {
