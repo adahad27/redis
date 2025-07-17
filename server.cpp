@@ -13,44 +13,44 @@ struct Connection_State {
     std::vector<uint8_t> outgoing;
 };
 
-int req_resp_handler(int connection_fd) {
-    char msg[4 + MAX_MSG_LEN];
+void parse_read(Connection_State &state) {
 
-    int error = recv_all(connection_fd, msg, 4);
+    //Populate state.outcoming here
+    state.want_write = true;
+}
 
-    if(error < 0) {
-        return error;
+void handle_write(Connection_State &state) {
+    //Write contents of outgoing to file descriptor here.
+    size_t msg_len = state.outgoing.size();
+
+    int bytes_written = 0;
+    bytes_written = send(state.fd, &msg_len, 4, 0);
+
+    if(bytes_written == -1) {
+        state.want_close = true;
+        return;
     }
 
-    uint32_t len = 0;
-    memcpy(&len, msg, 4);
+    bytes_written = send(state.fd, state.outgoing.data(), msg_len, 0);
 
-    if(len >= MAX_MSG_LEN) {
-        return -1;
+    if(bytes_written == -1) {
+        state.want_close = true;
+        return;
     }
 
-    error = recv_all(connection_fd, msg + 4, len);
-    
-    if(error < 0) {
-        return error;
+    state.want_close = true;
+    state.want_write = false;
+}
+
+void process_request(Connection_State &state) {
+    //TODO: Change this to actual callback function.
+    char response[] = "Server received the request!";
+    for(int i = 0; i < strlen(response); ++i) {
+        state.outgoing.push_back(response[i]);
     }
-
-    for(int i = 0; i < len; ++i) {
-        std::cout << msg[4 + i];
-    }
-    std::cout << std::endl;
-
-    char server_msg[] = "bye from the other side";
-    size_t str_len = strlen(server_msg);
-
-    send_all(connection_fd, (char*)&str_len, 4);
-    send_all(connection_fd, server_msg, str_len);
-    return 0;
-
 }
 
 void handle_read(Connection_State &state) {
-    std::cout<<"reading from " << state.fd << std::endl;
     char buf;
     while(state.incoming.size() < 4) {
         if((read(state.fd, &buf, 1) == -1)) {
@@ -74,12 +74,14 @@ void handle_read(Connection_State &state) {
             state.incoming.push_back(buf);
         }
     }
-    std::cout << "Received message was:\n";
-    for(int i = 0; i < incoming_length; ++i) {
-        std::cout << (char) state.incoming[i];
-    }
-    std::cout << std::endl;
+    // std::cout << "Received message was:\n";
+    // for(int i = 0; i < incoming_length; ++i) {
+    //     std::cout << (char) state.incoming[i];
+    // }
+    // std::cout << std::endl;
     state.want_read = false;
+    process_request(state);
+    handle_write(state);
 }
 
 void add_connection(int incoming_fd, std::vector<pollfd> &connections, std::vector<Connection_State> &states) {
@@ -166,7 +168,6 @@ void run_server(int fd) {
                     int incoming_fd = accept(fd, (sockaddr*) &client, &addrlen);
                     add_connection(incoming_fd, connections, states);
                     connections[i].revents = 0;
-                    std::cout << "Connection added for socket "<< incoming_fd << std::endl;
                 }
                 else {
                     //Insert read callback here
