@@ -16,13 +16,17 @@ int main() {
     
     char* len;
     char msg[] = "hello from the other side";
+    char msg_2[] = "side other the from hello";
     size_t str_len = strlen(msg);
+    size_t num_cmds = 2;
     
+    send_all(fd, (char*)&num_cmds, 4);
 
     send_all(fd, (char*)&str_len, 4);
-    // close(fd);
-    // return 0;
     send_all(fd, msg, strlen(msg));
+
+    send_all(fd, (char*)&str_len, 4);
+    send_all(fd, msg_2, strlen(msg_2));
 
     char response[4 + MAX_MSG_LEN];
 
@@ -34,7 +38,7 @@ int main() {
     for(int i = 0; i < str_len; ++i) {
         std::cout << response[4 + i];
     }
-    std::cout<<"\n Response Finished.\n";
+    std::cout<<"\nResponse Finished.\n";
 
 
     close(fd);

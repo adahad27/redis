@@ -47,33 +47,45 @@ void process_request(Connection_State &state) {
 }
 
 int handle_read(Connection_State &state) {
+
+    char num_cmds[4];
     char msg_len[4];
-    
-    if(recv(state.fd, msg_len, 4, 0) <= 0) {
-        //Client connection closed or we have an error
-        //TODO: Delete this fd 
-        state.want_close = true;
-        return -1;
-    }
-    
-    uint32_t len;
-    memcpy(&len, msg_len, 4);
 
-    state.incoming.resize(len);
-
-    if(recv(state.fd, state.incoming.data(), len, 0) <= 0) {
-        //Client connection closed or we have an error
-        //TODO: Delete this fd 
+    if(recv(state.fd, num_cmds, 4, 0) <= 0) {
         state.want_close = true;
         return -1;
     }
 
-    std::cout << "Request from socket: " << state.fd << " -> ";
-    for(int i = 0; i < len; ++i) {
-        std::cout << state.incoming[i];
-    }
-    std::cout << std::endl;
+    uint32_t cmds, len;
+    memcpy(&cmds, num_cmds, 4);
+    std::cout << "Request from socket: " << state.fd << "\n";
 
+    for(int i = 0; i < cmds; ++i) {
+
+        uint32_t buffer_end = state.incoming.size();
+        state.incoming.resize(buffer_end + 4);
+
+        if(recv(state.fd, state.incoming.data() + buffer_end, 4, 0) <= 0) {
+            state.want_close = true;
+            return -1;
+        }
+
+        memcpy(&len, state.incoming.data() + buffer_end, 4);
+        buffer_end = state.incoming.size();
+        state.incoming.resize(buffer_end + len);
+        
+        if(recv(state.fd, state.incoming.data() + buffer_end, len, 0) <= 0) {
+            state.want_close = true;
+            return -1;
+        }
+
+        for(int i = 0; i < len; ++i) {
+            std::cout << state.incoming[buffer_end + i];
+        }
+        std::cout << std::endl;
+
+    }
+    
     state.want_read = false;
     process_request(state);
     handle_write(state);
