@@ -23,17 +23,13 @@ void handle_write(Connection_State &state) {
     //Write contents of outgoing to file descriptor here.
     size_t msg_len = state.outgoing.size();
 
-    int bytes_written = 0;
-    bytes_written = send(state.fd, &msg_len, 4, 0);
-
-    if(bytes_written == -1) {
+    if(send(state.fd, &msg_len, 4, 0) <= 0) {
         state.want_close = true;
         return;
     }
 
-    bytes_written = send(state.fd, state.outgoing.data(), msg_len, 0);
 
-    if(bytes_written == -1) {
+    if(send(state.fd, state.outgoing.data(), msg_len, 0) <= 0) {
         state.want_close = true;
         return;
     }
@@ -50,38 +46,39 @@ void process_request(Connection_State &state) {
     }
 }
 
-void handle_read(Connection_State &state) {
-    char buf;
-    while(state.incoming.size() < 4) {
-        if((read(state.fd, &buf, 1) == -1)) {
-            return;
-        }
-        else {
-            state.incoming.push_back(buf);
-        }
+int handle_read(Connection_State &state) {
+    char msg_len[4];
+    
+    if(recv(state.fd, msg_len, 4, 0) <= 0) {
+        //Client connection closed or we have an error
+        //TODO: Delete this fd 
+        state.want_close = true;
+        return -1;
     }
     
-    size_t incoming_length;
-    
-    memcpy(&incoming_length, state.incoming.data(), 4);
-    
-    while(state.incoming.size() < 4 + incoming_length) {
-        if((read(state.fd, &buf, 1) == -1) && 
-            (errno == EAGAIN || errno == EWOULDBLOCK)) {
-            return;
-        }
-        else {
-            state.incoming.push_back(buf);
-        }
+    uint32_t len;
+    memcpy(&len, msg_len, 4);
+
+    state.incoming.resize(len);
+
+    if(recv(state.fd, state.incoming.data(), len, 0) <= 0) {
+        //Client connection closed or we have an error
+        //TODO: Delete this fd 
+        state.want_close = true;
+        return -1;
     }
-    std::cout << "Server received message:\n";
-    for(int i = 0; i < incoming_length; ++i) {
-        std::cout << (char) state.incoming[4 + i];
+
+    std::cout << "Request from socket: " << state.fd << " -> ";
+    for(int i = 0; i < len; ++i) {
+        std::cout << state.incoming[i];
     }
     std::cout << std::endl;
+
     state.want_read = false;
     process_request(state);
     handle_write(state);
+
+    return 0;
 }
 
 void add_connection(int incoming_fd, std::vector<pollfd> &connections, std::vector<Connection_State> &states) {
@@ -168,6 +165,7 @@ void run_server(int fd) {
                     int incoming_fd = accept(fd, (sockaddr*) &client, &addrlen);
                     add_connection(incoming_fd, connections, states);
                     connections[i].revents = 0;
+                    std::cout << "Connection established on socket: " << incoming_fd << std::endl;
                 }
                 else {
                     //Insert read callback here
@@ -183,7 +181,7 @@ void run_server(int fd) {
                 int socket_fd = connections[i].fd;
                 delete_connection(i, connections, states);
                 close(socket_fd);
-                std::cout << "Server closed connection " << socket_fd << std::endl;
+                std::cout << "Connection closed on socket: " << socket_fd << std::endl;
             }
         }
 
