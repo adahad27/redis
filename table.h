@@ -5,13 +5,15 @@
 
 struct Node {
     Node *next;
-    uint64_t hash = 0;
+    u_long hash = 0;
 };
 
 struct Datum {
     std::string value;
     Node node;
 };
+
+Datum* get_container(Node *node);
 
 class HTable {
     private:
@@ -24,6 +26,7 @@ class HTable {
         void insert(const std::string key, const std::string value);
         std::string get(const std::string key);
         void remove(const std::string key);
+        ~HTable();
 
 
 };

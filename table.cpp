@@ -21,7 +21,7 @@ HTable::HTable(uint32_t size) {
     this->size = 0;
 }
 
-void HTable::insert(std::string key, const std::string value) {
+void HTable::insert(const std::string key, const std::string value) {
     this->size += 1;
     //TODO: Insert check for growing logic here
 
@@ -34,6 +34,31 @@ void HTable::insert(std::string key, const std::string value) {
     u_long hash_val = hash(key.data(), key.size());
     uint32_t bucket = hash_val % this->size;
 
+
+    Datum *data = new Datum{"", {nullptr, hash_val}};
+    Node *current = this->table[bucket];
+    
+    //Insertion occurs at the front
+    data->node.next = this->table[bucket];
+    this->table[bucket] = &data->node;
+    
+
+}
+
+std::string HTable::get(const std::string key) {
+    u_long hash_val = hash(key.data(), key.size());
+    uint32_t bucket = hash_val % this->size;
+
+    Node *current = this->table[bucket];
+    while(current != nullptr) {
+        if(current->hash == hash_val){
+            Datum *data = get_container(current);
+            return data->value;
+        }
+        current = current->next;
+    }
+    char error_message[] = "Key not in table";
+    std::__throw_runtime_error(error_message);
 }
 
 

@@ -1,4 +1,5 @@
 #include "msg_lib.h"
+#include "table.h"
 #include <iostream>
 
 struct Connection_State {
