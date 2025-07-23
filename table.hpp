@@ -27,6 +27,8 @@ class HTable {
         /* hash() returns a hash based on the FNV-1a hashing algorithm for a 
         sequence of bytes. */
         u_long hash(const char *key, uint32_t size);
+
+        Datum* return_datum(const std::string key);
     
     public:
         HTable(uint32_t size);
@@ -47,7 +49,7 @@ class HTable {
         void remove(const std::string key);
 
         /* Destructor is responsible for manually cleaning up all memory that is
-         present within the table. */
+        present within the table. */
         ~HTable();
 
 

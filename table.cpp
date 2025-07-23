@@ -21,6 +21,21 @@ u_long HTable::hash(const char *key, uint32_t size) {
 
 }
 
+Datum* HTable::return_datum(const std::string key) {
+    u_long hash_val = hash(key.data(), key.size());
+    uint32_t bucket = hash_val % size;
+
+    Node *current = this->table[bucket];
+    while(current != nullptr) {
+        if(current->hash == hash_val){
+            Datum *data = get_container(current);
+            return data;
+        }
+        current = current->next;
+    }
+    return nullptr;
+}
+
 HTable::HTable(uint32_t size) {
     this->table = new Node*[size];
     for(uint32_t i = 0; i < size; ++i) {
@@ -37,27 +52,28 @@ void HTable::insert(const std::string key, const std::string value) {
     u_long hash_val = hash(key.data(), key.size());
     uint32_t bucket = hash_val % size;
 
-    //TODO: Add check for modifying already existing keys in the table
+    /* TODO: Currently hash for this key is calculated twice, once in insert and
+    once in return_datum(). Only needs to be called once. */
+    Datum *data = return_datum(key);
+    if(data == nullptr) {
+        data = new Datum{value, {nullptr, hash_val}};
+        data->node.next = this->table[bucket];
+        this->table[bucket] = &data->node;
+    }
+    else {
+        data->value = value;
+    }
 
-    Datum *data = new Datum{value, {nullptr, hash_val}};
-    data->node.next = this->table[bucket];
-    this->table[bucket] = &data->node;
+    
     
 
 }
 
 
 std::string HTable::get(const std::string key) {
-    u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % size;
-
-    Node *current = this->table[bucket];
-    while(current != nullptr) {
-        if(current->hash == hash_val){
-            Datum *data = get_container(current);
-            return data->value;
-        }
-        current = current->next;
+    Datum *data = return_datum(key);
+    if(data != nullptr) {
+        return data->value;
     }
     char error_message[] = "Key not in table";
     std::__throw_runtime_error(error_message);
@@ -65,17 +81,7 @@ std::string HTable::get(const std::string key) {
 
 
 bool HTable::contains(const std::string key) {
-    u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % size;
-
-    Node *current = this->table[bucket];
-    while(current != nullptr) {
-        if(current->hash == hash_val){
-            return true;
-        }
-        current = current->next;
-    }
-    return false;
+    return return_datum(key) != nullptr;
 }
 
 
