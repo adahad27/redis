@@ -1,8 +1,9 @@
 #ifndef TBL
 #define TBL
-#include "msg_lib.h"
+#include "msg_lib.hpp"
 #include <string>
 #include <memory>
+#include <cmath>
 
 struct Node {
     Node *next;

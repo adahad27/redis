@@ -1,5 +1,5 @@
-#include "msg_lib.h"
-#include "table.h"
+#include "msg_lib.hpp"
+#include "table.hpp"
 #include <iostream>
 
 struct Connection_State {

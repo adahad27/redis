@@ -1,4 +1,4 @@
-#include "msg_lib.h"
+#include "msg_lib.hpp"
 #include <iostream>
 
 int main() {

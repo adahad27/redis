@@ -1,8 +1,13 @@
-#include "table.h"
+#include "table.hpp"
+#include <iostream>
+#define DEBUG(x) std::cout<<"Reached line " << x << std::endl;
+#define FNV_BASIS 14695981039346656037
+#define FNV_OFFSET 1099511628211
 
-const unsigned long FNV_BASIS = 14695981039346656037;
-const unsigned long FNV_OFFSET = 1099511628211;
 
+Datum* get_container(Node *node_ptr) {
+    return (Datum*)((char*)node_ptr - offsetof(Datum, node));
+}
 
 u_long HTable::hash(const char *key, uint32_t size) {
     u_long current_hash = FNV_BASIS;
@@ -11,7 +16,6 @@ u_long HTable::hash(const char *key, uint32_t size) {
         current_hash = current_hash ^ key[i];
         current_hash *= FNV_OFFSET;
     }
-
     return current_hash;
 
 }
@@ -22,7 +26,6 @@ HTable::HTable(uint32_t size) {
 }
 
 void HTable::insert(const std::string key, const std::string value) {
-    this->size += 1;
     //TODO: Insert check for growing logic here
 
     /* 
@@ -32,12 +35,12 @@ void HTable::insert(const std::string key, const std::string value) {
     */
 
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    long bucket = fmod(hash_val, size);
 
+    //TODO: Add check for modifying already existing keys in the table
 
-    Datum *data = new Datum{"", {nullptr, hash_val}};
+    Datum *data = new Datum{value, {nullptr, hash_val}};
     Node *current = this->table[bucket];
-    
     //Insertion occurs at the front
     data->node.next = this->table[bucket];
     this->table[bucket] = &data->node;
@@ -47,7 +50,7 @@ void HTable::insert(const std::string key, const std::string value) {
 
 std::string HTable::get(const std::string key) {
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    long bucket = fmod(hash_val, size);
 
     Node *current = this->table[bucket];
     while(current != nullptr) {
@@ -63,7 +66,7 @@ std::string HTable::get(const std::string key) {
 
 void HTable::remove(const std::string key) {
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    long bucket = fmod(hash_val, size);
 
     Node *current = this->table[bucket];
     Node *prev = nullptr;
@@ -74,6 +77,9 @@ void HTable::remove(const std::string key) {
 
             if(prev){
                 prev->next = current->next;
+            }
+            else{
+                this->table[bucket] = current->next;
             }
             
             delete data;
@@ -87,5 +93,5 @@ void HTable::remove(const std::string key) {
 }
 
 HTable::~HTable() {
-    
+    std::cout << "\nDestroyed\n";
 }
