@@ -11,8 +11,8 @@ int main() {
     std::cout << hashmap.get("hello") << std::endl;
     std::cout << hashmap.get("We will") << std::endl;
     std::cout << hashmap.get("They don't really") << std::endl;
-    hashmap.remove("We will");
-    hashmap.remove("They don't really");
+    // hashmap.remove("We will");
+    // hashmap.remove("They don't really");
     std::cout << hashmap.get("hello") << std::endl;
     std::cout << hashmap.get("They don't really") << std::endl;
     std::cout << hashmap.get("We will") << std::endl;

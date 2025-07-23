@@ -1,5 +1,5 @@
 CC = g++
-CPPFLAGS     = -g
+CPPFLAGS     = -g -fsanitize=address -Wall -Werror
 LDFLAGS      =
 LIBS         = -lm
 
@@ -29,9 +29,10 @@ all: $(SERVER_TARGET) $(CLIENT_TARGET)
 
 # Generic rule for creating .o files
 %.o: %.cpp
-	${CC} -c $<
+	${CC} $(CPPFLAGS) -c $<
 
 clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(SERVER_TARGET) $(CLIENT_TARGET)
 	-rm -f *.out
+	-rm -f *.o
