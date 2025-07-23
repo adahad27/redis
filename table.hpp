@@ -28,6 +28,9 @@ class HTable {
         sequence of bytes. */
         u_long hash(const char *key, uint32_t size);
 
+        /* return_datum() will return a pointer to the Datum object
+        that corresponds to key. If the key is not in the table, returns nullptr
+        instead. */
         Datum* return_datum(const std::string key);
     
     public:
@@ -53,6 +56,22 @@ class HTable {
         ~HTable();
 
 
+        HTable& operator=(HTable &rhs);
+
+
+};
+
+
+class HMap {
+    private:
+        HTable old_table;
+        HTable new_table;
+
+    public:
+        void insert(const std::string key, const std::string value);
+        std::string get(const std::string key);
+        bool contains(const std::string key);
+        void remove(const std::string key);
 };
 
 

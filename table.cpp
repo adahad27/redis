@@ -124,8 +124,22 @@ void destroy_bucket(Node *node) {
 
 
 HTable::~HTable() {
-    for(uint32_t i = 0; i < size; ++i) {
-        destroy_bucket(table[i]);
+    if(table != nullptr) {
+        for(uint32_t i = 0; i < size; ++i) {
+            destroy_bucket(table[i]);
+            table[i] = nullptr;
+        }
     }
     delete[] table;
+    table = nullptr;
+}
+
+HTable& HTable::operator=(HTable &rhs) {
+    this->~HTable();
+    this->table = rhs.table;
+    this->size = rhs.size;
+    
+    rhs.size = 0;
+    rhs.table = nullptr;
+    return *this;
 }
