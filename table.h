@@ -2,6 +2,7 @@
 #define TBL
 #include "msg_lib.h"
 #include <string>
+#include <memory>
 
 struct Node {
     Node *next;

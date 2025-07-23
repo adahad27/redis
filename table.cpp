@@ -61,5 +61,31 @@ std::string HTable::get(const std::string key) {
     std::__throw_runtime_error(error_message);
 }
 
+void HTable::remove(const std::string key) {
+    u_long hash_val = hash(key.data(), key.size());
+    uint32_t bucket = hash_val % this->size;
 
+    Node *current = this->table[bucket];
+    Node *prev = nullptr;
 
+    while(current != nullptr) {
+        if(current->hash == hash_val){
+            Datum *data = get_container(current);
+
+            if(prev){
+                prev->next = current->next;
+            }
+            
+            delete data;
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+    char error_message[] = "Key not in table";
+    std::__throw_runtime_error(error_message);
+}
+
+HTable::~HTable() {
+    
+}
