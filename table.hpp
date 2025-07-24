@@ -58,7 +58,7 @@ class HTable {
 
         HTable& operator=(HTable &rhs);
 
-
+    friend class HMap;
 };
 
 

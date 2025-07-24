@@ -109,8 +109,9 @@ void HTable::remove(const std::string key) {
         prev = current;
         current = current->next;
     }
-    char error_message[] = "Key not in table";
-    std::__throw_runtime_error(error_message);
+    //Do we need this behavior if the key doesn't exist? I don't think so
+    // char error_message[] = "Key not in table";
+    // std::__throw_runtime_error(error_message);
 }
 
 void destroy_bucket(Node *node) {
@@ -142,4 +143,35 @@ HTable& HTable::operator=(HTable &rhs) {
     rhs.size = 0;
     rhs.table = nullptr;
     return *this;
+}
+
+std::string HMap::get(const std::string key) {
+    Datum *data;
+    data = old_table.return_datum(key);
+    if(data != nullptr) {
+        return data->value;
+    }
+    data = new_table.return_datum(key);
+    if(data != nullptr) {
+        return data->value;
+    }
+    char error_message[] = "Key not in table";
+    std::__throw_runtime_error(error_message);
+}
+
+
+bool HMap::contains(const std::string key) {
+    if(old_table.return_datum(key) != nullptr) {
+        return true;
+    }
+    if(new_table.return_datum(key) != nullptr) {
+        return true;
+    }
+    return false;
+}
+
+
+void HMap::remove(const std::string key) {
+    old_table.remove(key);
+    new_table.remove(key);
 }
