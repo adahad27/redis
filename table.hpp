@@ -34,7 +34,12 @@ class HTable {
         Datum* return_datum(const std::string key);
     
     public:
+
+        HTable();
+
         HTable(uint32_t size);
+
+        void init_table(uint32_t size);
 
         /* insert() inserts the key, value pair into the hashtable. If the value
         already exists, then the value is replaced */
@@ -58,7 +63,8 @@ class HTable {
 
         HTable& operator=(HTable &rhs);
 
-    friend class HMap;
+        friend class HMap;
+
 };
 
 
@@ -68,6 +74,7 @@ class HMap {
         HTable new_table;
 
     public:
+        HMap(uint32_t size);
         void insert(const std::string key, const std::string value);
         std::string get(const std::string key);
         bool contains(const std::string key);

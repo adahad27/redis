@@ -22,8 +22,11 @@ u_long HTable::hash(const char *key, uint32_t size) {
 }
 
 Datum* HTable::return_datum(const std::string key) {
+    if(this->table == nullptr){
+        return nullptr;
+    }
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % size;
+    uint32_t bucket = hash_val % this->size;
 
     Node *current = this->table[bucket];
     while(current != nullptr) {
@@ -36,21 +39,38 @@ Datum* HTable::return_datum(const std::string key) {
     return nullptr;
 }
 
+HTable::HTable() {
+    this->table = nullptr;
+    this->size = 0;
+}
+
 HTable::HTable(uint32_t size) {
     this->table = new Node*[size];
     for(uint32_t i = 0; i < size; ++i) {
-        table[i] = nullptr;
+        this->table[i] = nullptr;
     }
     this->size = size;
 }
 
+void HTable::init_table(uint32_t size) {
+    this->~HTable();
+    this->table = new Node*[size];
+    for(uint32_t i = 0; i < size; ++i) {
+        this->table[i] = nullptr;
+    }
+    this->size = size;
+}
 
 void HTable::insert(const std::string key, const std::string value) {
-    //TODO: Insert check for growing logic here
+    if(this->table == nullptr){
+        //TODO: Think more about if this is the best behavior.
+        char error_message[] = "Cannot insert into uninitialized table";
+        std::__throw_runtime_error(error_message);
+    }
 
 
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % size;
+    uint32_t bucket = hash_val % this->size;
 
     /* TODO: Currently hash for this key is calculated twice, once in insert and
     once in return_datum(). Only needs to be called once. */
@@ -86,8 +106,11 @@ bool HTable::contains(const std::string key) {
 
 
 void HTable::remove(const std::string key) {
+    if(this->table == nullptr) {
+        return;
+    }
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % size;
+    uint32_t bucket = hash_val % this->size;
 
     Node *current = this->table[bucket];
     Node *prev = nullptr;
@@ -109,9 +132,6 @@ void HTable::remove(const std::string key) {
         prev = current;
         current = current->next;
     }
-    //Do we need this behavior if the key doesn't exist? I don't think so
-    // char error_message[] = "Key not in table";
-    // std::__throw_runtime_error(error_message);
 }
 
 void destroy_bucket(Node *node) {
@@ -123,16 +143,19 @@ void destroy_bucket(Node *node) {
     }
 }
 
+HMap::HMap(uint32_t size) {
+    this->new_table.init_table(size);
+}
 
 HTable::~HTable() {
-    if(table != nullptr) {
-        for(uint32_t i = 0; i < size; ++i) {
-            destroy_bucket(table[i]);
-            table[i] = nullptr;
+    if(this->table != nullptr) {
+        for(uint32_t i = 0; i < this->size; ++i) {
+            destroy_bucket(this->table[i]);
+            this->table[i] = nullptr;
         }
     }
-    delete[] table;
-    table = nullptr;
+    delete[] this->table;
+    this->table = nullptr;
 }
 
 HTable& HTable::operator=(HTable &rhs) {
