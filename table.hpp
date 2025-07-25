@@ -72,6 +72,9 @@ class HMap {
     private:
         HTable old_table;
         HTable new_table;
+        uint32_t current_bucket;
+        void shift_items(uint32_t num_items);
+        void shift_item();
 
     public:
         HMap(uint32_t size);

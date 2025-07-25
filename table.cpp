@@ -145,6 +145,7 @@ void destroy_bucket(Node *node) {
 
 HMap::HMap(uint32_t size) {
     this->new_table.init_table(size);
+    this->current_bucket = 0;
 }
 
 HTable::~HTable() {
@@ -197,4 +198,49 @@ bool HMap::contains(const std::string key) {
 void HMap::remove(const std::string key) {
     old_table.remove(key);
     new_table.remove(key);
+}
+
+void HMap::insert(const std::string key, const std::string value) {
+    new_table.insert(key, value);
+    shift_items(128);
+}
+
+
+void HMap::shift_item() {
+    Datum *data = get_container(this->old_table.table[this->current_bucket]);
+    u_long hash_value = data->node.hash;
+    this->old_table.table[this->current_bucket] = data->node.next;
+
+    
+    uint32_t bucket = hash_value % this->new_table.size;
+
+    // If the hashed value exists in new_table, return without doing anything
+    Node *current = this->new_table.table[bucket];
+    while(current != nullptr) {
+        if(current->hash == hash_value) {
+            return;
+        }
+        current = current->next;
+    }
+    data->node.next = this->new_table.table[bucket];
+    this->new_table.table[bucket] = &data->node;
+
+}
+
+
+void HMap::shift_items(uint32_t num_items) {
+    Node **table = this->old_table.table;
+    uint32_t size = this->old_table.size;
+    for(uint32_t i = 0; i < num_items; ++i) {
+        if((table[this->current_bucket] != nullptr) || (this->current_bucket != (size - 1))) {
+            //All keys have been migrated from old_table
+            this->current_bucket = 0;
+            return;
+        }
+        if(table[this->current_bucket] == nullptr) {
+            this->current_bucket += 1;
+            continue;
+        }
+        shift_item();
+    }
 }
