@@ -84,6 +84,7 @@ class HMap {
         std::string get(const std::string key);
         bool contains(const std::string key);
         void remove(const std::string key);
+        ~HMap();
 };
 
 

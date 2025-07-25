@@ -102,6 +102,7 @@ std::string HTable::get(const std::string key) {
     if(data != nullptr) {
         return data->value;
     }
+    DEBUG("105");
     char error_message[] = "Key not in table";
     std::__throw_runtime_error(error_message);
 }
@@ -153,7 +154,7 @@ void destroy_bucket(Node *node) {
 
 HTable::~HTable() {
     if(table != nullptr) {
-        for(uint32_t i = 0; i < mask; ++i) {
+        for(uint32_t i = 0; i <= mask; ++i) {
             destroy_bucket(table[i]);
             table[i] = nullptr;
         }
@@ -190,7 +191,8 @@ std::string HMap::get(const std::string key) {
     if(data != nullptr) {
         return data->value;
     }
-    char error_message[] = "Key not in table";
+    char error_message[] = "Key not in Map";
+    DEBUG("195");
     std::__throw_runtime_error(error_message);
 }
 
@@ -267,4 +269,9 @@ void HMap::shift_items(uint32_t num_items) {
         }
         shift_item();
     }
+}
+
+HMap::~HMap() {
+    old_table.~HTable();
+    new_table.~HTable();
 }
