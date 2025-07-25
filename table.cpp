@@ -1,5 +1,6 @@
 #include "table.hpp"
 #include <iostream>
+#include <cassert>
 #define DEBUG(x) std::cout<<"Reached line " << x << std::endl;
 #define FNV_BASIS 14695981039346656037u
 #define FNV_OFFSET 1099511628211
@@ -22,13 +23,13 @@ u_long HTable::hash(const char *key, uint32_t size) {
 }
 
 Datum* HTable::return_datum(const std::string key) {
-    if(this->table == nullptr){
+    if(table == nullptr){
         return nullptr;
     }
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    uint32_t bucket = hash_val & mask;
 
-    Node *current = this->table[bucket];
+    Node *current = table[bucket];
     while(current != nullptr) {
         if(current->hash == hash_val){
             Datum *data = get_container(current);
@@ -40,29 +41,34 @@ Datum* HTable::return_datum(const std::string key) {
 }
 
 HTable::HTable() {
-    this->table = nullptr;
-    this->size = 0;
+    table = nullptr;
+    size = 0;
+    mask = 0;
 }
 
-HTable::HTable(uint32_t size) {
-    this->table = new Node*[size];
-    for(uint32_t i = 0; i < size; ++i) {
-        this->table[i] = nullptr;
+HTable::HTable(uint32_t capacity) {
+    assert(capacity > 0 && ((capacity - 1) & capacity) == 0);
+    table = new Node*[capacity];
+    for(uint32_t i = 0; i < capacity; ++i) {
+        table[i] = nullptr;
     }
-    this->size = size;
+    mask = capacity - 1;
+    size = 0;
 }
 
-void HTable::init_table(uint32_t size) {
+void HTable::init_table(uint32_t capacity) {
+    assert(capacity > 0 && ((capacity - 1) & capacity) == 0);
     this->~HTable();
-    this->table = new Node*[size];
-    for(uint32_t i = 0; i < size; ++i) {
-        this->table[i] = nullptr;
+    table = new Node*[capacity];
+    for(uint32_t i = 0; i < capacity; ++i) {
+        table[i] = nullptr;
     }
-    this->size = size;
+    mask = capacity - 1;
+    size = 0;
 }
 
 void HTable::insert(const std::string key, const std::string value) {
-    if(this->table == nullptr){
+    if(table == nullptr){
         //TODO: Think more about if this is the best behavior.
         char error_message[] = "Cannot insert into uninitialized table";
         std::__throw_runtime_error(error_message);
@@ -70,15 +76,16 @@ void HTable::insert(const std::string key, const std::string value) {
 
 
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    uint32_t bucket = hash_val & mask;
 
     /* TODO: Currently hash for this key is calculated twice, once in insert and
     once in return_datum(). Only needs to be called once. */
     Datum *data = return_datum(key);
     if(data == nullptr) {
         data = new Datum{value, {nullptr, hash_val}};
-        data->node.next = this->table[bucket];
-        this->table[bucket] = &data->node;
+        data->node.next = table[bucket];
+        table[bucket] = &data->node;
+        size += 1;
     }
     else {
         data->value = value;
@@ -106,13 +113,13 @@ bool HTable::contains(const std::string key) {
 
 
 void HTable::remove(const std::string key) {
-    if(this->table == nullptr) {
+    if(table == nullptr) {
         return;
     }
     u_long hash_val = hash(key.data(), key.size());
-    uint32_t bucket = hash_val % this->size;
+    uint32_t bucket = hash_val & mask;
 
-    Node *current = this->table[bucket];
+    Node *current = table[bucket];
     Node *prev = nullptr;
 
     while(current != nullptr) {
@@ -123,7 +130,7 @@ void HTable::remove(const std::string key) {
                 prev->next = current->next;
             }
             else{
-                this->table[bucket] = current->next;
+                table[bucket] = current->next;
             }
             
             delete data;
@@ -143,30 +150,34 @@ void destroy_bucket(Node *node) {
     }
 }
 
-HMap::HMap(uint32_t size) {
-    this->new_table.init_table(size);
-    this->current_bucket = 0;
-}
 
 HTable::~HTable() {
-    if(this->table != nullptr) {
-        for(uint32_t i = 0; i < this->size; ++i) {
-            destroy_bucket(this->table[i]);
-            this->table[i] = nullptr;
+    if(table != nullptr) {
+        for(uint32_t i = 0; i < mask; ++i) {
+            destroy_bucket(table[i]);
+            table[i] = nullptr;
         }
     }
-    delete[] this->table;
-    this->table = nullptr;
+    delete[] table;
+    table = nullptr;
 }
 
 HTable& HTable::operator=(HTable &rhs) {
     this->~HTable();
-    this->table = rhs.table;
-    this->size = rhs.size;
+    table = rhs.table;
+    mask = rhs.mask;
+    size = rhs.size;
     
     rhs.size = 0;
     rhs.table = nullptr;
     return *this;
+}
+
+
+HMap::HMap(uint32_t size) {
+    new_table.init_table(size);
+    current_bucket = 0;
+    load_factor_limit = 3; //For maximum allowable load factor
 }
 
 std::string HMap::get(const std::string key) {
@@ -202,43 +213,56 @@ void HMap::remove(const std::string key) {
 
 void HMap::insert(const std::string key, const std::string value) {
     new_table.insert(key, value);
+    /* 
+    size / capacity <= 3 -> size <= capcity * 3; 
+    */
+    if(new_table.size > (new_table.mask + 1) * load_factor_limit) {
+        //start rehashing
+        old_table = new_table;
+        new_table.init_table(old_table.mask << 1); //Double new table's size
+
+    }
     shift_items(128);
 }
 
 
 void HMap::shift_item() {
-    Datum *data = get_container(this->old_table.table[this->current_bucket]);
+    Datum *data = get_container(old_table.table[current_bucket]);
     u_long hash_value = data->node.hash;
-    this->old_table.table[this->current_bucket] = data->node.next;
+    old_table.table[current_bucket] = data->node.next;
 
     
-    uint32_t bucket = hash_value % this->new_table.size;
+    uint32_t bucket = hash_value & new_table.mask;
 
     // If the hashed value exists in new_table, return without doing anything
-    Node *current = this->new_table.table[bucket];
+    Node *current = new_table.table[bucket];
     while(current != nullptr) {
         if(current->hash == hash_value) {
             return;
         }
         current = current->next;
     }
-    data->node.next = this->new_table.table[bucket];
-    this->new_table.table[bucket] = &data->node;
+    data->node.next = new_table.table[bucket];
+    new_table.table[bucket] = &data->node;
 
 }
 
 
 void HMap::shift_items(uint32_t num_items) {
-    Node **table = this->old_table.table;
-    uint32_t size = this->old_table.size;
+    Node **table = old_table.table;
+    if(table == nullptr) {
+        return;
+    }
+    uint32_t capacity = old_table.mask + 1;
     for(uint32_t i = 0; i < num_items; ++i) {
-        if((table[this->current_bucket] != nullptr) || (this->current_bucket != (size - 1))) {
+        if((table[current_bucket] != nullptr) || (current_bucket != (capacity - 1))) {
             //All keys have been migrated from old_table
-            this->current_bucket = 0;
+            current_bucket = 0;
+            old_table.~HTable();
             return;
         }
-        if(table[this->current_bucket] == nullptr) {
-            this->current_bucket += 1;
+        if(table[current_bucket] == nullptr) {
+            current_bucket += 1;
             continue;
         }
         shift_item();

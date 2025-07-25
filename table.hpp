@@ -22,6 +22,7 @@ Datum* get_container(Node *node);
 class HTable {
     private:
         Node **table;
+        uint32_t mask;
         uint32_t size;
 
         /* hash() returns a hash based on the FNV-1a hashing algorithm for a 
@@ -37,9 +38,9 @@ class HTable {
 
         HTable();
 
-        HTable(uint32_t size);
+        HTable(uint32_t capacity);
 
-        void init_table(uint32_t size);
+        void init_table(uint32_t capacity);
 
         /* insert() inserts the key, value pair into the hashtable. If the value
         already exists, then the value is replaced */
@@ -73,6 +74,7 @@ class HMap {
         HTable old_table;
         HTable new_table;
         uint32_t current_bucket;
+        uint32_t load_factor_limit;
         void shift_items(uint32_t num_items);
         void shift_item();
 
