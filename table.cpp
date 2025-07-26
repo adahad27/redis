@@ -221,7 +221,9 @@ void HMap::insert(const std::string key, const std::string value) {
     if(new_table.size > (new_table.mask + 1) * load_factor_limit) {
         //start rehashing
         old_table = new_table;
-        new_table.init_table(old_table.mask << 1); //Double new table's size
+        uint32_t mask = old_table.mask;
+        mask = mask << 1;
+        new_table.init_table(mask << 1); //Double new table's size
 
     }
     shift_items(128);
@@ -255,10 +257,9 @@ void HMap::shift_items(uint32_t num_items) {
     if(table == nullptr) {
         return;
     }
-    uint32_t capacity = old_table.mask + 1;
+    uint32_t capacity = old_table.mask;
     for(uint32_t i = 0; i < num_items; ++i) {
-        if((table[current_bucket] != nullptr) || (current_bucket != (capacity - 1))) {
-            //All keys have been migrated from old_table
+        if(table[current_bucket] == nullptr && current_bucket == capacity) {
             current_bucket = 0;
             old_table.~HTable();
             return;
