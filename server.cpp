@@ -58,24 +58,22 @@ void process_request(Connection_State &state) {
         memcpy(&arg_len, state.incoming.data() + buffer_end, 4);
         buffer_end += 4;
         for(int j = 0; j < arg_len; ++j) {
-            // std::cout << state.incoming[buffer_end + j];
             arguments[i].push_back(state.incoming[buffer_end + j]);
         }
         buffer_end += arg_len;
-        std::cout << std::endl;
 
     }
 
     if(!strcmp(cmd, "set")) {
-        // std::cout << "set" << std::endl;
         map.insert(arguments[0], arguments[1]);
     }
     else if(!strcmp(cmd, "get")) {
-        // std::cout << "get" << std::endl;
         std::string response = map.get(arguments[0]);
+        for(uint32_t i = 0; i < response.size(); ++i) {
+            state.outgoing.push_back((char)response[i]);
+        }
     }
     else if(!strcmp(cmd, "del")) {
-        // std::cout << "del" << std::endl;
         map.remove(arguments[0]);
     }
 }
@@ -111,11 +109,6 @@ int handle_read(Connection_State &state) {
             state.want_close = true;
             return -1;
         }
-
-        for(uint32_t i = 0; i < len; ++i) {
-            std::cout << state.incoming[buffer_end + i];
-        }
-        std::cout << std::endl;
 
     }
     
