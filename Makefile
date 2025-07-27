@@ -1,5 +1,6 @@
 CC = g++
 CPPFLAGS     = -g -fsanitize=address -Wall -Werror
+# CPPFLAGS     = -g -Wall -Werror
 LDFLAGS      =
 LIBS         = -lm
 

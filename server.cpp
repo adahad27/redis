@@ -24,14 +24,15 @@ void handle_write(Connection_State &state) {
     //Write contents of outgoing to file descriptor here.
     size_t msg_len = state.outgoing.size();
 
-    if(send(state.fd, &msg_len, 4, 0) <= 0) {
+    if(send(state.fd, &msg_len, 4, MSG_NOSIGNAL) <= 0) {
         state.want_close = true;
+        state.want_write = false;
         return;
     }
 
-
-    if(send(state.fd, state.outgoing.data(), msg_len, 0) <= 0) {
+    if(send(state.fd, state.outgoing.data(), msg_len, MSG_NOSIGNAL) <= 0) {
         state.want_close = true;
+        state.want_write = false;
         return;
     }
 
@@ -42,7 +43,7 @@ void handle_write(Connection_State &state) {
 void process_request(Connection_State &state) {
     //TODO: Change this to actual callback function.
     char response[] = "Server received the request!";
-    for(int i = 0; i < strlen(response); ++i) {
+    for(uint32_t i = 0; i < strlen(response); ++i) {
         state.outgoing.push_back(response[i]);
     }
 }
@@ -50,7 +51,6 @@ void process_request(Connection_State &state) {
 int handle_read(Connection_State &state) {
 
     char num_cmds[4];
-    char msg_len[4];
 
     if(recv(state.fd, num_cmds, 4, 0) <= 0) {
         state.want_close = true;
@@ -61,7 +61,7 @@ int handle_read(Connection_State &state) {
     memcpy(&cmds, num_cmds, 4);
     std::cout << "Request from socket: " << state.fd << "\n";
 
-    for(int i = 0; i < cmds; ++i) {
+    for(uint32_t i = 0; i < cmds; ++i) {
 
         uint32_t buffer_end = state.incoming.size();
         state.incoming.resize(buffer_end + 4);
@@ -80,7 +80,7 @@ int handle_read(Connection_State &state) {
             return -1;
         }
 
-        for(int i = 0; i < len; ++i) {
+        for(uint32_t i = 0; i < len; ++i) {
             std::cout << state.incoming[buffer_end + i];
         }
         std::cout << std::endl;
@@ -127,7 +127,7 @@ int init_server() {
     assert(fd >= 0);
 
     int val = 1;
-    int option = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &val, sizeof(val));
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &val, sizeof(val));
 
     sockaddr_in addr{};
 
@@ -136,7 +136,7 @@ int init_server() {
     addr.sin_port = htons(port);
 
 
-    int network_status = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+    bind(fd, (struct sockaddr*)&addr, sizeof(addr));
     return fd;
 }
 
@@ -156,7 +156,7 @@ void run_server(int fd) {
 
     while(true) {
 
-        for(int i = 0; i < connections.size(); ++i) {
+        for(uint32_t i = 0; i < connections.size(); ++i) {
             connections[i].events = 0;
             if(states[i].want_read) {
                 connections[i].events |= POLLIN;
@@ -169,9 +169,9 @@ void run_server(int fd) {
             }
         }
 
-        int poll_updates = poll(connections.data(), connections.size(), -1);
+        poll(connections.data(), connections.size(), -1);
 
-        for(int i = 0; i < connections.size(); ++i) {
+        for(uint32_t i = 0; i < connections.size(); ++i) {
             if(connections[i].revents & POLLIN) {
 
                 if(connections[i].fd == fd) {
