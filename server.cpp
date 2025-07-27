@@ -2,6 +2,9 @@
 #include "table.hpp"
 #include <iostream>
 
+HMap map(1);
+
+
 struct Connection_State {
 
     int fd = -1;
@@ -14,11 +17,7 @@ struct Connection_State {
     std::vector<uint8_t> outgoing;
 };
 
-void parse_read(Connection_State &state) {
 
-    //Populate state.outcoming here
-    state.want_write = true;
-}
 
 void handle_write(Connection_State &state) {
     //Write contents of outgoing to file descriptor here.
@@ -41,10 +40,43 @@ void handle_write(Connection_State &state) {
 }
 
 void process_request(Connection_State &state) {
-    //TODO: Change this to actual callback function.
-    char response[] = "Server received the request!";
-    for(uint32_t i = 0; i < strlen(response); ++i) {
-        state.outgoing.push_back(response[i]);
+    
+    int num_cmds;
+    int arg_len;
+    char cmd[4];
+
+    std::vector<std::string> arguments;
+
+    memcpy(&num_cmds, state.incoming.data(), 4);
+    arguments.resize(num_cmds - 1);
+
+    memcpy(cmd, state.incoming.data() + 4, 3);
+    cmd[3] = 0;
+    uint32_t buffer_end = 7;
+
+    for(int i = 0; i < num_cmds - 1; ++i) {
+        memcpy(&arg_len, state.incoming.data() + buffer_end, 4);
+        buffer_end += 4;
+        for(int j = 0; j < arg_len; ++j) {
+            // std::cout << state.incoming[buffer_end + j];
+            arguments[i].push_back(state.incoming[buffer_end + j]);
+        }
+        buffer_end += arg_len;
+        std::cout << std::endl;
+
+    }
+
+    if(!strcmp(cmd, "set")) {
+        // std::cout << "set" << std::endl;
+        map.insert(arguments[0], arguments[1]);
+    }
+    else if(!strcmp(cmd, "get")) {
+        // std::cout << "get" << std::endl;
+        std::string response = map.get(arguments[0]);
+    }
+    else if(!strcmp(cmd, "del")) {
+        // std::cout << "del" << std::endl;
+        map.remove(arguments[0]);
     }
 }
 
