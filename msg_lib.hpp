@@ -24,8 +24,10 @@ const uint32_t MAX_MSG_LEN = 1000;
 
 void get_request(std::string key, char* response, int &response_len);
 
-void del_request(std::string key);
+void del_request(std::string key, char* response, int& response_len);
 
-void set_request(std::string key, std::string value);
+void set_request(std::string key, std::string value, char* response, int& response_len);
+
+void print_resp(char* response, int response_len);
 
 #endif

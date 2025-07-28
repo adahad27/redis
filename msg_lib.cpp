@@ -1,5 +1,5 @@
 #include "msg_lib.hpp"
-
+#include <iostream>
 
 int recv_all(int connfd, char* buf, int n) {
     int read_bytes = 0;
@@ -69,7 +69,7 @@ void get_request(std::string key, char* response, int &response_len) {
     close(fd);
 }
 
-void del_request(std::string key) {
+void del_request(std::string key, char* response, int& response_len) {
     int fd = establish_connection();
 
     char command[] = "del";
@@ -87,10 +87,13 @@ void del_request(std::string key) {
     send_all(fd, (char*) &arg_len, 4);
     send_all(fd, arg, arg_len);
 
+    recv_all(fd, (char*) &response_len, 4);
+    recv_all(fd, response, response_len);
+
     close(fd);
 }
 
-void set_request(std::string key, std::string value) {
+void set_request(std::string key, std::string value, char* response, int& response_len) {
     int fd = establish_connection();
 
     char command[] = "set";
@@ -113,5 +116,15 @@ void set_request(std::string key, std::string value) {
     send_all(fd, (char*) &arg_2_len, 4);
     send_all(fd, arg_2, arg_2_len);
 
+    recv_all(fd, (char*) &response_len, 4);
+    recv_all(fd, response, response_len);
+
     close(fd);
+}
+
+void print_resp(char* response, int response_len) {
+    for(int i = 0; i < response_len; ++i) {
+        std::cout <<response[i];
+    }
+    std::cout << std::endl;
 }

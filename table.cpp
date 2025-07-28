@@ -215,15 +215,12 @@ void HMap::remove(const std::string key) {
 
 void HMap::insert(const std::string key, const std::string value) {
     new_table.insert(key, value);
-    /* 
-    size / capacity <= 3 -> size <= capcity * 3; 
-    */
     if(new_table.size > (new_table.mask + 1) * load_factor_limit) {
         //start rehashing
         old_table = new_table;
         uint32_t mask = old_table.mask;
-        mask = mask << 1;
-        new_table.init_table(mask << 1); //Double new table's size
+        mask = (mask + 1) << 1;
+        new_table.init_table(mask); //Double new table's size
 
     }
     shift_items(128);

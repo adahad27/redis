@@ -66,6 +66,10 @@ void process_request(Connection_State &state) {
 
     if(!strcmp(cmd, "set")) {
         map.insert(arguments[0], arguments[1]);
+        char response[] = "Key-Value pair inserted";
+        for(uint32_t i = 0; i < strlen(response); ++i) {
+            state.outgoing.push_back(response[i]);
+        }
     }
     else if(!strcmp(cmd, "get")) {
         std::string response = map.get(arguments[0]);
@@ -75,6 +79,10 @@ void process_request(Connection_State &state) {
     }
     else if(!strcmp(cmd, "del")) {
         map.remove(arguments[0]);
+        char response[] = "Key-Value pair deleted";
+        for(uint32_t i = 0; i < strlen(response); ++i) {
+            state.outgoing.push_back(response[i]);
+        }
     }
 }
 
@@ -89,7 +97,6 @@ int handle_read(Connection_State &state) {
 
     uint32_t cmds, len;
     memcpy(&cmds, num_cmds, 4);
-    std::cout << "Request from socket: " << state.fd << "\n";
 
     for(uint32_t i = 0; i < cmds; ++i) {
 
