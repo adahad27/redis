@@ -43,18 +43,15 @@ void process_request(Connection_State &state) {
     
     int num_cmds;
     int arg_len;
-    char cmd[4];
 
     std::vector<std::string> arguments;
 
     memcpy(&num_cmds, state.incoming.data(), 4);
-    arguments.resize(num_cmds - 1);
+    arguments.resize(num_cmds);
 
-    memcpy(cmd, state.incoming.data() + 4, 3);
-    cmd[3] = 0;
-    uint32_t buffer_end = 7;
+    uint32_t buffer_end = 4;
 
-    for(int i = 0; i < num_cmds - 1; ++i) {
+    for(int i = 0; i < num_cmds; ++i) {
         memcpy(&arg_len, state.incoming.data() + buffer_end, 4);
         buffer_end += 4;
         for(int j = 0; j < arg_len; ++j) {
@@ -64,21 +61,21 @@ void process_request(Connection_State &state) {
 
     }
 
-    if(!strcmp(cmd, "set")) {
-        map.insert(arguments[0], arguments[1]);
+    if(!strcmp(arguments[0].data(), "set")) {
+        map.insert(arguments[1], arguments[2]);
         char response[] = "Key-Value pair inserted";
         for(uint32_t i = 0; i < strlen(response); ++i) {
             state.outgoing.push_back(response[i]);
         }
     }
-    else if(!strcmp(cmd, "get")) {
-        std::string response = map.get(arguments[0]);
+    else if(!strcmp(arguments[0].data(), "get")) {
+        std::string response = map.get(arguments[1]);
         for(uint32_t i = 0; i < response.size(); ++i) {
             state.outgoing.push_back((char)response[i]);
         }
     }
-    else if(!strcmp(cmd, "del")) {
-        map.remove(arguments[0]);
+    else if(!strcmp(arguments[0].data(), "del")) {
+        map.remove(arguments[1]);
         char response[] = "Key-Value pair deleted";
         for(uint32_t i = 0; i < strlen(response); ++i) {
             state.outgoing.push_back(response[i]);
@@ -88,15 +85,14 @@ void process_request(Connection_State &state) {
 
 int handle_read(Connection_State &state) {
 
-    char num_cmds[4];
+    uint32_t cmds, len;
 
-    if(recv(state.fd, num_cmds, 4, 0) <= 0) {
+    if(recv(state.fd, (char*)&cmds, 4, 0) <= 0) {
         state.want_close = true;
         return -1;
     }
-
-    uint32_t cmds, len;
-    memcpy(&cmds, num_cmds, 4);
+    state.incoming.resize(4);
+    memcpy(state.incoming.data(), &cmds, 4);
 
     for(uint32_t i = 0; i < cmds; ++i) {
 
@@ -202,6 +198,7 @@ void run_server(int fd) {
         }
 
         poll(connections.data(), connections.size(), -1);
+
 
         for(uint32_t i = 0; i < connections.size(); ++i) {
             if(connections[i].revents & POLLIN) {

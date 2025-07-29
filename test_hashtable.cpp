@@ -25,10 +25,12 @@ int main() {
 
     // std::cout << map.get("They don't really") << std::endl;
 
-    HMap hmap(2);
+    HMap hmap(1);
+    hmap.insert("Hello", "Adele");
     hmap.insert("Summer Days", "Macklemore");
     hmap.insert("All The Stars", "Kendrick Lamar");
     hmap.insert("Stay", "Zedd");
+    hmap.remove("Hello");
     hmap.insert("Maps", "Maroon 5");
     hmap.insert("Gone are the Days", "Kygo");
     hmap.insert("Hero", "Faouzia");
