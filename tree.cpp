@@ -61,7 +61,7 @@ TreeNode *fix_left(TreeNode *node) {
 }
 
 TreeNode *fix_right(TreeNode *node) {
-    if (get_height(node->right->left) < get_height(node->right->right)) {
+    if (get_height(node->right->left) > get_height(node->right->right)) {
         node->right = rot_right(node->right);
     }
     return rot_left(node);
@@ -129,4 +129,39 @@ TreeNode *del(TreeNode *node) {
     }
     *from = victim;
     return root;
+}
+
+void search_and_insert(
+    TreeNode **root, TreeNode *new_node, bool (*less)(TreeNode *, TreeNode *))
+{
+    // find the insert position
+    TreeNode *parent = nullptr; // place the new node as its child
+    TreeNode **from = root;  // place the new node here
+    for (TreeNode *node = *root; node; ) {
+        from = less(new_node, node) ? &node->left : &node->right;
+        parent = node;
+        node = *from;
+    }
+    // link the new node
+    *from = new_node;
+    new_node->parent = parent;
+    // fix the updated node
+    *root = fix(new_node);
+}
+
+TreeNode* search_and_delete(
+    TreeNode **root, int32_t (*cmp)(TreeNode *, void *), void *key)
+{
+    for (TreeNode *node = *root; node; ) {
+        int32_t r = cmp(node, key);
+        if (r < 0) {            // node < key
+            node = node->right;
+        } else if (r > 0) {     // node > key
+            node = node->left;
+        } else {                // found
+            *root = del(node);
+            return node;
+        }
+    }
+    return nullptr;                // not found
 }
