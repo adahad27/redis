@@ -174,6 +174,11 @@ HTable& HTable::operator=(HTable &rhs) {
     return *this;
 }
 
+HMap::HMap() {
+    new_table.init_table(1);
+    current_bucket = 0;
+    load_factor_limit = 3;
+}
 
 HMap::HMap(uint32_t size) {
     new_table.init_table(size);

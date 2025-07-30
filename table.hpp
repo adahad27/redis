@@ -79,6 +79,7 @@ class HMap {
         void shift_item();
 
     public:
+        HMap();
         HMap(uint32_t size);
         void insert(const std::string key, const std::string value);
         std::string get(const std::string key);
