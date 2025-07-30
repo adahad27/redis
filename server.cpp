@@ -1,6 +1,9 @@
 #include "msg_lib.hpp"
 #include "table.hpp"
 #include <iostream>
+#include <boost/thread.hpp>
+
+
 
 HMap map(1);
 

@@ -131,37 +131,32 @@ TreeNode *del(TreeNode *node) {
     return root;
 }
 
-void search_and_insert(
-    TreeNode **root, TreeNode *new_node, bool (*less)(TreeNode *, TreeNode *))
+void search_and_insert(TreeNode **root, TreeNode *new_node, bool (*less)(TreeNode *, TreeNode *))
 {
-    // find the insert position
-    TreeNode *parent = nullptr; // place the new node as its child
-    TreeNode **from = root;  // place the new node here
+    TreeNode *parent = nullptr;
+    TreeNode **from = root;
     for (TreeNode *node = *root; node; ) {
         from = less(new_node, node) ? &node->left : &node->right;
         parent = node;
         node = *from;
     }
-    // link the new node
     *from = new_node;
     new_node->parent = parent;
-    // fix the updated node
     *root = fix(new_node);
 }
 
-TreeNode* search_and_delete(
-    TreeNode **root, int32_t (*cmp)(TreeNode *, void *), void *key)
+TreeNode* search_and_delete(TreeNode **root, int32_t (*cmp)(TreeNode *, void *), void *key)
 {
     for (TreeNode *node = *root; node; ) {
         int32_t r = cmp(node, key);
-        if (r < 0) {            // node < key
+        if (r < 0) {
             node = node->right;
-        } else if (r > 0) {     // node > key
+        } else if (r > 0) {
             node = node->left;
-        } else {                // found
+        } else {
             *root = del(node);
             return node;
         }
     }
-    return nullptr;                // not found
+    return nullptr;
 }

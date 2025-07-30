@@ -1,5 +1,5 @@
 CC = g++
-CPPFLAGS     = -g -fsanitize=address -Wall -Werror
+CPPFLAGS     = -g -fsanitize=address -Wall -Werror -lboost_system -pthread -ldl
 # CPPFLAGS     = -g -Wall -Werror
 LDFLAGS      =
 LIBS         = -lm
