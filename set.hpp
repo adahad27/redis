@@ -1,11 +1,11 @@
 #include "table.hpp"
 #include "tree.hpp"
-class ZNode {
-    private:
+struct ZNode {
+    std::string name; 
+        int score;   
+        
         TreeNode tree_node;
         Node table_node;
-        double score;
-        std::string name;
 };
 
 class ZSet {
@@ -15,7 +15,7 @@ class ZSet {
 
     public:
         ZSet();
-        bool zset_insert(std::string name, double score);
+        bool zset_insert(std::string name, int score);
         ZNode *zset_lookup(std::string name);
         void zset_delete(std::string name);
         ~ZSet();
