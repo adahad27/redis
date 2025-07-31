@@ -174,6 +174,58 @@ HTable& HTable::operator=(HTable &rhs) {
     return *this;
 }
 
+void HTable::insert_node(Node *node) {
+    //Assume the hash value is already set.
+    ulong hash_val = node->hash;
+    uint32_t bucket = hash_val & mask;
+    Node *current = table[bucket];
+
+    while(current != nullptr) {
+        if(current->next && current->next->hash == hash_val) {
+            Node *target = current->next;
+            node->next = target->next;
+            current->next = node;
+            delete get_container(target);
+            return;
+        }
+
+        current = current->next;
+    }
+
+    node->next = current;
+    table[bucket] = node;
+
+}
+
+Node* HTable::pop_node(const std::string key) {
+    if(table == nullptr) {
+        return nullptr;
+    }
+    u_long hash_val = hash(key.data(), key.size());
+    uint32_t bucket = hash_val & mask;
+
+    Node *current = table[bucket];
+    Node *prev = nullptr;
+
+    while(current != nullptr) {
+        if(current->hash == hash_val){
+            Datum *data = get_container(current);
+
+            if(prev){
+                prev->next = current->next;
+            }
+            else{
+                table[bucket] = current->next;
+            }
+            
+            return current;
+        }
+        prev = current;
+        current = current->next;
+    }
+    return nullptr;
+}
+
 HMap::HMap() {
     new_table.init_table(1);
     current_bucket = 0;
@@ -277,4 +329,18 @@ void HMap::shift_items(uint32_t num_items) {
 HMap::~HMap() {
     old_table.~HTable();
     new_table.~HTable();
+}
+
+void HMap::insert_node(Node *node) {
+    new_table.insert_node(node);
+}
+
+Node* HMap::pop_node(const std::string key) {
+    Node *node = old_table.pop_node(key);
+    if(node) {
+        return node;
+    }
+    else {
+        return new_table.pop_node(key);
+    }
 }

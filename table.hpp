@@ -33,6 +33,10 @@ class HTable {
         that corresponds to key. If the key is not in the table, returns nullptr
         instead. */
         Datum* return_datum(const std::string key);
+
+        void insert_node(Node *node);
+
+        Node *pop_node(const std::string key);
     
     public:
 
@@ -85,6 +89,10 @@ class HMap {
         std::string get(const std::string key);
         bool contains(const std::string key);
         void remove(const std::string key);
+
+        void insert_node(Node *node);
+        Node* pop_node(const std::string key);
+
         ~HMap();
 };
 
