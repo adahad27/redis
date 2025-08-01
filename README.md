@@ -6,5 +6,6 @@ The higher-level table currently supports the following 3 commands:
 1. get
 2. set
 3. del
+
 Sorted Sets were initially implemented using AVL trees for faster production. Later AVL trees will be replaced with B-Trees to replicate Redis logic.
 More information will be added as the scope of the project becomes clear.

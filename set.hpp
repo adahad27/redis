@@ -1,11 +1,11 @@
 #include "table.hpp"
 #include "tree.hpp"
 struct ZNode {
-    std::string name; 
-        int score;   
-        
-        TreeNode tree_node;
-        Node table_node;
+    std::string key; 
+    int value;   
+    
+    TreeNode tree_node;
+    Node table_node;
 };
 
 class ZSet {
