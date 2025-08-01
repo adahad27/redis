@@ -1,16 +1,6 @@
 #include <unistd.h>
 #include <string>
-struct TreeNode {
-    TreeNode *parent;
-    TreeNode *left;
-    TreeNode *right;
-    uint32_t height;
-};
-
-struct TreeDatum {
-    u_long key;
-    TreeNode node;
-};
+#include "objects.hpp"
 
 void search_and_insert(TreeNode **root, TreeNode *new_node, bool (*less)(TreeNode *, TreeNode *));
 

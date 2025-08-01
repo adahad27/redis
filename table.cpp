@@ -6,7 +6,7 @@
 #define FNV_OFFSET 1099511628211
 
 
-Datum* get_container(Node *node_ptr) {
+Datum* get_container(HNode *node_ptr) {
     return (Datum*)((char*)node_ptr - offsetof(Datum, node));
 }
 
@@ -29,7 +29,7 @@ Datum* HTable::return_datum(const std::string key) {
     u_long hash_val = hash(key.data(), key.size());
     uint32_t bucket = hash_val & mask;
 
-    Node *current = table[bucket];
+    HNode *current = table[bucket];
     while(current != nullptr) {
         if(current->hash == hash_val){
             Datum *data = get_container(current);
@@ -48,7 +48,7 @@ HTable::HTable() {
 
 HTable::HTable(uint32_t capacity) {
     assert(capacity > 0 && ((capacity - 1) & capacity) == 0);
-    table = new Node*[capacity];
+    table = new HNode*[capacity];
     for(uint32_t i = 0; i < capacity; ++i) {
         table[i] = nullptr;
     }
@@ -59,7 +59,7 @@ HTable::HTable(uint32_t capacity) {
 void HTable::init_table(uint32_t capacity) {
     assert(capacity > 0 && ((capacity - 1) & capacity) == 0);
     this->~HTable();
-    table = new Node*[capacity];
+    table = new HNode*[capacity];
     for(uint32_t i = 0; i < capacity; ++i) {
         table[i] = nullptr;
     }
@@ -120,8 +120,8 @@ void HTable::remove(const std::string key) {
     u_long hash_val = hash(key.data(), key.size());
     uint32_t bucket = hash_val & mask;
 
-    Node *current = table[bucket];
-    Node *prev = nullptr;
+    HNode *current = table[bucket];
+    HNode *prev = nullptr;
 
     while(current != nullptr) {
         if(current->hash == hash_val){
@@ -142,7 +142,7 @@ void HTable::remove(const std::string key) {
     }
 }
 
-void destroy_bucket(Node *node) {
+void destroy_bucket(HNode *node) {
     if(node != nullptr) {
         destroy_bucket(node->next);
         node->next = nullptr;
@@ -174,15 +174,15 @@ HTable& HTable::operator=(HTable &rhs) {
     return *this;
 }
 
-void HTable::insert_node(Node *node) {
+void HTable::insert_node(HNode *node) {
     //Assume the hash value is already set.
     ulong hash_val = node->hash;
     uint32_t bucket = hash_val & mask;
-    Node *current = table[bucket];
+    HNode *current = table[bucket];
 
     while(current != nullptr) {
         if(current->next && current->next->hash == hash_val) {
-            Node *target = current->next;
+            HNode *target = current->next;
             node->next = target->next;
             current->next = node;
             delete get_container(target);
@@ -197,15 +197,15 @@ void HTable::insert_node(Node *node) {
 
 }
 
-Node* HTable::pop_node(const std::string key) {
+HNode* HTable::pop_node(const std::string key) {
     if(table == nullptr) {
         return nullptr;
     }
     u_long hash_val = hash(key.data(), key.size());
     uint32_t bucket = hash_val & mask;
 
-    Node *current = table[bucket];
-    Node *prev = nullptr;
+    HNode *current = table[bucket];
+    HNode *prev = nullptr;
 
     while(current != nullptr) {
         if(current->hash == hash_val){
@@ -293,7 +293,7 @@ void HMap::shift_item() {
     uint32_t bucket = hash_value & new_table.mask;
 
     // If the hashed value exists in new_table, return without doing anything
-    Node *current = new_table.table[bucket];
+    HNode *current = new_table.table[bucket];
     while(current != nullptr) {
         if(current->hash == hash_value) {
             return;
@@ -307,7 +307,7 @@ void HMap::shift_item() {
 
 
 void HMap::shift_items(uint32_t num_items) {
-    Node **table = old_table.table;
+    HNode **table = old_table.table;
     if(table == nullptr) {
         return;
     }
@@ -331,12 +331,12 @@ HMap::~HMap() {
     new_table.~HTable();
 }
 
-void HMap::insert_node(Node *node) {
+void HMap::insert_node(HNode *node) {
     new_table.insert_node(node);
 }
 
-Node* HMap::pop_node(const std::string key) {
-    Node *node = old_table.pop_node(key);
+HNode* HMap::pop_node(const std::string key) {
+    HNode *node = old_table.pop_node(key);
     if(node) {
         return node;
     }

@@ -4,24 +4,16 @@
 #include <string>
 #include <memory>
 #include <cmath>
+#include "objects.hpp"
 
-struct Node {
-    Node *next;
-    u_long hash = 0;
-};
-
-struct Datum {
-    std::string value;
-    Node node;
-};
 
 /* get_container() returns the pointer to the start of the intrusive data
 structure that holds node_ptr. */
-Datum* get_container(Node *node);
+Datum* get_container(HNode *node);
 
 class HTable {
     private:
-        Node **table;
+        HNode **table;
         uint32_t mask;
         uint32_t size;
 
@@ -34,9 +26,9 @@ class HTable {
         instead. */
         Datum* return_datum(const std::string key);
 
-        void insert_node(Node *node);
+        void insert_node(HNode *node);
 
-        Node *pop_node(const std::string key);
+        HNode *pop_node(const std::string key);
     
     public:
 
@@ -90,8 +82,8 @@ class HMap {
         bool contains(const std::string key);
         void remove(const std::string key);
 
-        void insert_node(Node *node);
-        Node* pop_node(const std::string key);
+        void insert_node(HNode *node);
+        HNode* pop_node(const std::string key);
 
         ~HMap();
 };
