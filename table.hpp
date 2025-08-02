@@ -9,7 +9,6 @@
 
 /* get_container() returns the pointer to the start of the intrusive data
 structure that holds node_ptr. */
-Datum* get_container(HNode *node);
 
 class HTable {
     private:
@@ -21,10 +20,10 @@ class HTable {
         sequence of bytes. */
         u_long hash(const char *key, uint32_t size);
 
-        /* return_datum() will return a pointer to the Datum object
+        /* return_entry() will return a pointer to the Datum object
         that corresponds to key. If the key is not in the table, returns nullptr
         instead. */
-        Datum* return_datum(const std::string key);
+        Entry* return_entry(const std::string key);
 
         void insert_node(HNode *node);
 

@@ -1,15 +1,15 @@
 CC = g++
-CPPFLAGS     = -g -fsanitize=address -Wall -Werror -lboost_system -pthread -ldl
+CPPFLAGS     = -g -fsanitize=address -Wall -Werror -lboost_system -pthread -ldl -Wno-invalid-offsetof
 # CPPFLAGS     = -g -Wall -Werror
 LDFLAGS      =
 LIBS         = -lm
 
 DESTDIR = ./
 SERVER_TARGET = server
-SERVER_OBJS = server.o msg_lib.o table.o
+SERVER_OBJS = server.o msg_lib.o table.o objects.o
 
 TEST_TARGET = test
-TEST_OBJS = test_hashtable.o msg_lib.o table.o
+TEST_OBJS = test_hashtable.o msg_lib.o table.o objects.o
 
 CLIENT_TARGET = client
 CLIENT_OBJS = client.o msg_lib.o

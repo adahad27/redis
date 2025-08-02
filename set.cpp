@@ -6,9 +6,12 @@ ZSet::ZSet() {
 
 ZNode* alloc_znode(std::string name, int score) {
     u_long hash_val;
+    std::string value = std::to_string(score);
+    
     ZNode *node = new ZNode{
         name,
-        score,
+        value,
+        EntryType::INT,
         {nullptr, nullptr, nullptr},
         {nullptr, hash_val}
     };
@@ -19,7 +22,7 @@ ZNode* get_z_container(TreeNode *node) {
     return (ZNode*)((char*)node - offsetof(ZNode, tree_node));
 }
 
-ZNode* get_z_container(Node *node) {
+ZNode* get_z_container(HNode *node) {
     return (ZNode*)((char*)node - offsetof(ZNode, table_node));
 }
 
