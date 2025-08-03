@@ -4,16 +4,17 @@ ZSet::ZSet() {
     root = nullptr;
 }
 
-ZNode* alloc_znode(std::string name, int score) {
+ZNode* alloc_znode(std::string key, int score) {
     u_long hash_val;
     std::string value = std::to_string(score);
     
     ZNode *node = new ZNode{
-        name,
+        key,
         value,
         EntryType::INT,
-        {nullptr, nullptr, nullptr},
-        {nullptr, hash_val}
+        {nullptr, hash_val},
+        {nullptr, nullptr, nullptr}
+        
     };
     return node;
 }
@@ -42,20 +43,20 @@ bool tree_less(TreeNode *node_1, TreeNode *node_2) {
 
 }
 
-void update_tree(TreeNode **root, int score) {
+void update_tree(std::string key, int value) {
 
 }
 
-bool ZSet::zset_insert(std::string name, int score) {
+bool ZSet::zset_insert(std::string key, int value) {
     
-    if() {
+    if(true) {
         //Then special case for insertion
-        update_tree(&root);
+        update_tree(key, value);
         return false;
     }
-    ZNode *node = alloc_znode(name, score);
+    ZNode *node = alloc_znode(key, value);
     map.insert_node(&node->table_node);
-    search_and_insert(&root, &node->tree_node, tree_less);
+    // search_and_insert(&root, &node->tree_node, tree_less);
     return true;
 }
 

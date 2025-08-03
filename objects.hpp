@@ -1,3 +1,5 @@
+#ifndef OBJ
+#define OBJ
 #include <string>
 
 enum EntryType {
@@ -42,3 +44,5 @@ struct TreeDatum {
 Entry* get_container(TreeNode *node_ptr);
 
 Entry* get_container(HNode *node_ptr);
+
+#endif

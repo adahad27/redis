@@ -12,7 +12,7 @@ TEST_TARGET = test
 TEST_OBJS = test_hashtable.o msg_lib.o table.o objects.o
 
 CLIENT_TARGET = client
-CLIENT_OBJS = client.o msg_lib.o
+CLIENT_OBJS = client.o msg_lib.o objects.o
 
 OBJECTS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 

@@ -10,8 +10,8 @@ class ZSet {
 
     public:
         ZSet();
-        bool zset_insert(std::string name, int score);
-        ZNode *zset_lookup(std::string name);
-        void zset_delete(std::string name);
+        bool zset_insert(std::string key, int value);
+        ZNode *zset_lookup(std::string key);
+        void zset_delete(std::string key);
         ~ZSet();
 };

@@ -20,14 +20,16 @@ class HTable {
         sequence of bytes. */
         u_long hash(const char *key, uint32_t size);
 
-        /* return_entry() will return a pointer to the Datum object
+        /* return_node() will return a pointer to the Datum object
         that corresponds to key. If the key is not in the table, returns nullptr
         instead. */
-        Entry* return_entry(const std::string key);
+        HNode* return_node(const std::string key);
 
         void insert_node(HNode *node);
 
-        HNode *pop_node(const std::string key);
+        HNode* pop_node(const std::string key);
+
+        HNode* get_node(const std::string key);
     
     public:
 
@@ -83,6 +85,7 @@ class HMap {
 
         void insert_node(HNode *node);
         HNode* pop_node(const std::string key);
+        HNode* get_node(const std::string key);
 
         ~HMap();
 };

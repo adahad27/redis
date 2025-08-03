@@ -1,4 +1,5 @@
 #include "table.hpp"
+#include "objects.hpp"
 #include <iostream>
 #include <cassert>
 #define DEBUG(x) std::cout<<"Reached line " << x << std::endl;
@@ -19,7 +20,7 @@ u_long HTable::hash(const char *key, uint32_t size) {
 
 }
 
-Entry* HTable::return_entry(const std::string key) {
+HNode* HTable::return_node(const std::string key) {
     if(table == nullptr){
         return nullptr;
     }
@@ -29,7 +30,7 @@ Entry* HTable::return_entry(const std::string key) {
     HNode *current = table[bucket];
     while(current != nullptr) {
         if(current->hash == hash_val){
-            return get_container(current);
+            return current;
         }
         current = current->next;
     }
@@ -75,8 +76,8 @@ void HTable::insert(const std::string key, const std::string value) {
     uint32_t bucket = hash_val & mask;
 
     /* TODO: Currently hash for this key is calculated twice, once in insert and
-    once in return_entry(). Only needs to be called once. */
-    Entry *data = return_entry(key);
+    once in return_node(). Only needs to be called once. */
+    Entry *data = get_container(return_node(key));
     if(data == nullptr) {
         data = new Entry{key, value, EntryType::STRING, {nullptr, hash_val}};
         data->table_node.next = table[bucket];
@@ -84,6 +85,7 @@ void HTable::insert(const std::string key, const std::string value) {
         size += 1;
     }
     else {
+        std::cout << data << std::endl;
         data->value = value;
     }
 
@@ -94,7 +96,7 @@ void HTable::insert(const std::string key, const std::string value) {
 
 
 std::string HTable::get(const std::string key) {
-    Entry *data = return_entry(key);
+    Entry *data = get_container(return_node(key));
     if(data != nullptr) {
         return data->value;
     }
@@ -105,9 +107,13 @@ std::string HTable::get(const std::string key) {
 
 
 bool HTable::contains(const std::string key) {
-    return return_entry(key) != nullptr;
+    return return_node(key) != nullptr;
 }
 
+
+HNode* HTable::get_node(const std::string key) {
+    return return_node(key);
+}
 
 void HTable::remove(const std::string key) {
     if(table == nullptr) {
@@ -234,11 +240,11 @@ HMap::HMap(uint32_t size) {
 
 std::string HMap::get(const std::string key) {
     Entry *data;
-    data = old_table.return_entry(key);
+    data = get_container(old_table.return_node(key));
     if(data != nullptr) {
         return data->value;
     }
-    data = new_table.return_entry(key);
+    data = get_container(new_table.return_node(key));
     if(data != nullptr) {
         return data->value;
     }
@@ -249,10 +255,10 @@ std::string HMap::get(const std::string key) {
 
 
 bool HMap::contains(const std::string key) {
-    if(old_table.return_entry(key) != nullptr) {
+    if(old_table.return_node(key) != nullptr) {
         return true;
     }
-    if(new_table.return_entry(key) != nullptr) {
+    if(new_table.return_node(key) != nullptr) {
         return true;
     }
     return false;
@@ -337,4 +343,16 @@ HNode* HMap::pop_node(const std::string key) {
     else {
         return new_table.pop_node(key);
     }
+}
+
+HNode* HMap::get_node(const std::string key) {
+    HNode *node = old_table.return_node(key);
+    if(node) {
+        return node;
+    }
+    node = new_table.return_node(key);
+    if(node) {
+        return node;
+    }
+    return nullptr;
 }
